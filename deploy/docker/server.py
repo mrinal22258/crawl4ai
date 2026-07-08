@@ -412,7 +412,7 @@ def _resolve_auth():
     the behavioral test harness can import the app without a hard exit.
 
     - credential configured  -> enforce (fail fast on jwt_enabled w/o SECRET_KEY)
-    - none + non-loopback bind -> refuse to start (would be open to the network)
+    - none + non-loopback bind -> refuse to start (would be open to the network) unless allow_insecure_bind is set
     - none + loopback bind    -> generate a one-off token and print it
     """
     host = config["app"]["host"]
@@ -427,13 +427,26 @@ def _resolve_auth():
         return
 
     if not loopback:
-        logger.critical(
-            "Refusing to start: binding %s with no CRAWL4AI_API_TOKEN and "
-            "jwt_enabled=false would expose an unauthenticated API. Set "
-            "CRAWL4AI_API_TOKEN=$(openssl rand -hex 32), enable jwt, or bind loopback.",
+        allow_insecure_bind = (
+            os.environ.get("CRAWL4AI_ALLOW_INSECURE_BIND", "false").lower() in ("1", "true")
+            or config.get("security", {}).get("allow_insecure_bind", False)
+        )
+        if not allow_insecure_bind:
+            logger.critical(
+                "Refusing to start: binding %s with no CRAWL4AI_API_TOKEN and "
+                "jwt_enabled=false would expose an unauthenticated API. Set "
+                "CRAWL4AI_API_TOKEN=$(openssl rand -hex 32), enable jwt, or bind loopback.",
+                host,
+            )
+            sys.exit(1)
+        
+        logger.warning(
+            "WARNING: Server is running unauthenticated on a non-loopback bind (%s) "
+            "because the operator explicitly opted in via CRAWL4AI_ALLOW_INSECURE_BIND. "
+            "This assumes the network layer (e.g. Kubernetes NetworkPolicy) is the trust boundary.",
             host,
         )
-        sys.exit(1)
+        return
 
     import secrets as _secrets
     gen = _secrets.token_hex(32)

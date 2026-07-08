@@ -2485,6 +2485,7 @@ rate_limiting:
 security:
   enabled: false # Master toggle for security features
   jwt_enabled: false # Enable JWT authentication (requires security.enabled=true)
+  allow_insecure_bind: false # Set to true to allow unauthenticated non-loopback binds (trusted networks only)
   https_redirect: false # Force HTTPS (requires security.enabled=true)
   trusted_hosts: ["*"] # Allowed hosts (use specific domains in production)
   headers: # Security headers (applied if security.enabled=true)
@@ -2492,6 +2493,19 @@ security:
     x_frame_options: "DENY"
     content_security_policy: "default-src 'self'"
     strict_transport_security: "max-age=63072000; includeSubDomains"
+
+### Trusted-Network / Kubernetes Deployments (Insecure Bind Opt-Out)
+
+In secure-by-default mode (v0.9.0+), the Docker server refuses to bind to non-loopback addresses (like `0.0.0.0`) without a configured `CRAWL4AI_API_TOKEN` or `jwt_enabled: true`.
+
+However, in trusted-network environments (such as Kubernetes deployments where isolation is enforced at the network layer using default-deny NetworkPolicies), you can explicitly opt-out of the mandatory token requirement.
+
+**Enabling Insecure Bind:**
+- **Environment Variable:** Set `CRAWL4AI_ALLOW_INSECURE_BIND=true` (or `1`).
+- **Configuration (config.yml):** Set `security.allow_insecure_bind: true`.
+
+> [!WARNING]
+> Only enable `allow_insecure_bind` if you have alternative security mechanisms (e.g. Kubernetes NetworkPolicies, firewalls, or service meshes) enforcing the trust boundary. Exposing an unauthenticated Crawl4AI API to an untrusted network allows arbitrary actors to trigger web crawls and consume server resources.
 
 # Crawler Configuration
 crawler:

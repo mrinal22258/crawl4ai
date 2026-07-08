@@ -50,6 +50,7 @@ DEFAULT_CONFIG = {
         "enabled": False,
         "jwt_enabled": False,
         "api_token": "",
+        "allow_insecure_bind": False,
         "https_redirect": False,
         "trusted_hosts": ["*"],
         "headers": {

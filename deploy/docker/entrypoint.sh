@@ -22,13 +22,14 @@ if [[ -z "${CRAWL4AI_API_TOKEN:-}" && -f /run/secrets/api_token ]]; then
     export CRAWL4AI_API_TOKEN="$(cat /run/secrets/api_token)"
 fi
 
-# --- Bind resolution: loopback unless a credential is present. ---------------
+# --- Bind resolution: loopback unless a credential is present or insecure bind allowed.
 PORT="${CRAWL4AI_PORT:-11235}"
-if [[ -n "${CRAWL4AI_API_TOKEN:-}" || "${CRAWL4AI_JWT_ENABLED:-false}" == "true" ]]; then
-    # A credential is configured -> the operator may expose all interfaces.
-    GUNICORN_BIND="${GUNICORN_BIND:-[::]:${PORT}}"
+if [[ -n "${CRAWL4AI_API_TOKEN:-}" || "${CRAWL4AI_JWT_ENABLED:-false}" == "true" || "${CRAWL4AI_ALLOW_INSECURE_BIND:-false}" == "1" || "${CRAWL4AI_ALLOW_INSECURE_BIND:-false}" == "true" ]]; then
+    # A credential is configured or insecure bind is allowed -> the operator may expose all interfaces.
+    # Note: Using 0.0.0.0 instead of [::] to prevent uvicorn.workers.UvicornWorker from mangling into a malformed tcp:// URI
+    GUNICORN_BIND="${GUNICORN_BIND:-0.0.0.0:${PORT}}"
 else
-    # No credential -> refuse to expose; serve loopback only.
+    # No credential and insecure bind not allowed -> refuse to expose; serve loopback only.
     GUNICORN_BIND="127.0.0.1:${PORT}"
     echo "entrypoint: no CRAWL4AI_API_TOKEN set; binding loopback only (${GUNICORN_BIND})." >&2
 fi

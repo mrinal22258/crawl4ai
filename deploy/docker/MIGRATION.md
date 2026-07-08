@@ -174,6 +174,7 @@ messages are unchanged.
 - The hardened `docker-compose.yml` uses `read_only: true` + tmpfs, `cap_drop:
   [ALL]`, `no-new-privileges`, and `shm_size` instead of a host `/dev/shm` bind.
   Mirror these in a custom compose file.
+- **Unauthenticated non-loopback binds (trusted networks)**: If running in a trusted network environment (e.g. Kubernetes with default-deny NetworkPolicies) where network security boundaries exist, you can allow the server to start on a non-loopback address without a token/JWT by setting `CRAWL4AI_ALLOW_INSECURE_BIND=true` (or `security.allow_insecure_bind: true` in config). This will log a warning at startup.
 - The `/dashboard` and `/playground` UIs get baseline headers
   (`nosniff`, `X-Frame-Options: DENY`) and are auth-gated; a stricter CSP for
   the UIs is planned in a follow-up.

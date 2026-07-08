@@ -61,6 +61,10 @@ security:
   enabled: true
   jwt_enabled: false
   api_token: ""  # When set, /token endpoint requires this secret to issue JWTs
+  # SECURITY NOTE: Set allow_insecure_bind to true to allow the server to start on a non-loopback
+  # interface without requiring CRAWL4AI_API_TOKEN. Only do this if security is enforced
+  # at the network layer (e.g., Kubernetes NetworkPolicy with default-deny).
+  allow_insecure_bind: false
   https_redirect: false
   trusted_hosts: ["*"]
   cors_allow_origins: []  # deny-by-default; list explicit origins to allow CORS
